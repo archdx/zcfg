@@ -1,5 +1,6 @@
 # zconf
-
+[![Build Status](https://travis-ci.org/mzoxx/zconf.svg?branch=master)](https://travis-ci.org/mzoxx/zconf)
+[![codecov](https://codecov.io/gh/mzoxx/zconf/branch/master/graph/badge.svg)](https://codecov.io/gh/mzoxx/zconf)
 ### Description
 
 Package zconf provides functionality to load application config with order of precedence:  
