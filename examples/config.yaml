@@ -1,0 +1,16 @@
+---
+api:
+  port: 8000
+
+clickhouse:
+  host: localhost:9000
+
+kafka:
+  brokers:
+  - localhost:9092
+  - localhost:9093
+  topic: test-topic
+  consumerGroup: consumer-group-1
+
+log:
+  level: INFO
