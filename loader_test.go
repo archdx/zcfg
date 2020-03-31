@@ -18,16 +18,31 @@ func TestLoad(t *testing.T) {
 		}
 
 		clickhouseConfig struct {
-			Host        string        `json:"host"     flag:"host"     env:"CLICKHOUSE_HOST"`
-			User        string        `json:"user"     flag:"user"     env:"CLICKHOUSE_USER"`
-			Database    string        `json:"database" flag:"database" env:"CLICKHOUSE_DATABASE"`
-			ReadTimeout time.Duration `yaml:"readTimeout" flag:"readTimeout" env:"CLICKHOUSE_READ_TIMEOUT"`
+			Host        string        `json:"host"        flag:"host"        env:"CLICKHOUSE_HOST"`
+			User        string        `json:"user"        flag:"user"        env:"CLICKHOUSE_USER"`
+			Database    string        `json:"database"    flag:"database"    env:"CLICKHOUSE_DATABASE"`
+			ReadTimeout time.Duration `json:"readTimeout" flag:"readTimeout" env:"CLICKHOUSE_READ_TIMEOUT"`
 		}
 
 		kafkaConfig struct {
 			Brokers       []string `yaml:"brokers"       flag:"brokers"       env:"KAFKA_BROKERS"`
 			Topic         string   `yaml:"topic"         flag:"topic"         env:"KAFKA_TOPIC"`
 			ConsumerGroup string   `yaml:"consumerGroup" flag:"consumerGroup" env:"KAFKA_CONSUMER_GROUP"`
+		}
+
+		redisPoolConfig struct {
+			MaxActive    int           `json:"maxActive"    flag:"maxActive"    env:"REDIS_POOL_MAX_ACTIVE"`
+			MaxIdle      int           `json:"maxIdle"      flag:"maxIdle"      env:"REDIS_POOL_MAX_IDLE"`
+			IdleTimeout  time.Duration `json:"idleTimeout"  flag:"idleTimeout"  env:"REDIS_POOL_IDLE_TIMEOUT"`
+			ConnLifetime time.Duration `json:"connLifetime" flag:"connLifetime" env:"REDIS_POOL_CONN_LIFETIME"`
+		}
+
+		redisConfig struct {
+			Host         string           `json:"host"         flag:"host"         env:"REDIS_HOST"`
+			Database     int              `json:"database"     flag:"database"     env:"REDIS_DATABASE"`
+			ReadTimeout  time.Duration    `json:"readTimeout"  flag:"readTimeout"  env:"REDIS_READ_TIMEOUT"`
+			WriteTimeout time.Duration    `json:"writeTimeout" flag:"writeTimeout" env:"REDIS_WRITE_TIMEOUT"`
+			Pool         *redisPoolConfig `json:"pool"         flag:"pool"`
 		}
 
 		logConfig struct {
@@ -38,6 +53,7 @@ func TestLoad(t *testing.T) {
 			API        *apiConfig        `json:"api"        flag:"api"`
 			Clickhouse *clickhouseConfig `json:"clickhouse" flag:"clickhouse"`
 			Kafka      *kafkaConfig      `json:"kafka"      flag:"kafka"`
+			Redis      *redisConfig      `json:"redis"      flag:"redis"`
 			Log        *logConfig        `json:"log"        flag:"log"`
 			Debug      bool              `json:"debug"      flag:"debug"      env:"DEBUG"`
 		}
@@ -60,6 +76,9 @@ func TestLoad(t *testing.T) {
 				"brokers": [
 					"localhost:9092"
 				]
+			},
+			"redis": {
+				"host": "localhost:6379"
 			}
 		}`,
 	))
@@ -81,6 +100,8 @@ func TestLoad(t *testing.T) {
 		"--clickhouse.database", "testdb",
 		"--clickhouse.readTimeout", "1s",
 		"--kafka.brokers", "localhost:9092,localhost:9093",
+		"--redis.database", "1",
+		"--redis.pool.maxActive", "64",
 		"--debug", "1",
 	})
 
@@ -96,6 +117,13 @@ func TestLoad(t *testing.T) {
 		},
 		Kafka: &kafkaConfig{
 			Brokers: []string{"localhost:9092", "localhost:9093"},
+		},
+		Redis: &redisConfig{
+			Host:     "localhost:6379",
+			Database: 1,
+			Pool: &redisPoolConfig{
+				MaxActive: 64,
+			},
 		},
 		Log: &logConfig{
 			Level: "INFO",
