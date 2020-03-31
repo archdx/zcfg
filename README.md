@@ -4,7 +4,7 @@
 ### Description
 
 Package zconf provides functionality to load application config with order of precedence:  
-Command line arguments > Environment variable > Configuration file
+Command line arguments > Environment variables > Configuration file
 
 The key difference from [viper](https://github.com/spf13/viper) is a ready to use config struct after load without need to additionally use any getters
 
@@ -46,6 +46,6 @@ LOG_LEVEL=DEBUG go run main.go --api.port=8001 --clickhouse.user=testuser --clic
 ```
 
 ### TODO
-- vault provider support
+- vault support for passwords and other stuff
 - more file types
 - more examples
