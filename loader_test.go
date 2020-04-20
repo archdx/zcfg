@@ -86,7 +86,7 @@ func TestLoad(t *testing.T) {
 	flagSet := flag.NewFlagSet("", flag.ExitOnError)
 
 	var cfg config
-	cfgLoader := New(&cfg).FromJSON(cfgFile.Name()).WithFlags(flagSet)
+	cfgLoader := New(&cfg, FromJSON(cfgFile.Name()), UseFlags(flagSet))
 
 	unsetEnv := setTestEnv(testCaseEnv{
 		"LOG_LEVEL": "INFO",

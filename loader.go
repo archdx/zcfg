@@ -1,7 +1,6 @@
 package zconf
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -10,16 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 const (
 	tagEnv  = "env"
 	tagFlag = "flag"
 )
-
-const flagCfgPath = "c"
 
 var timeDurationType = reflect.TypeOf(time.Duration(0))
 
@@ -47,33 +42,6 @@ func (l *Loader) Load() error {
 	}
 
 	return l.overrideConfig("", "", l.cfg, nil)
-}
-
-func (l *Loader) FromYAML(defaultPath string) *Loader {
-	l.cfgPath = defaultPath
-	l.cfgFileDecoder = func(r io.Reader, dst interface{}) error {
-		return yaml.NewDecoder(r).Decode(dst)
-	}
-
-	return l
-}
-
-func (l *Loader) FromJSON(defaultPath string) *Loader {
-	l.cfgPath = defaultPath
-	l.cfgFileDecoder = func(r io.Reader, dst interface{}) error {
-		return json.NewDecoder(r).Decode(dst)
-	}
-
-	return l
-}
-
-func (l *Loader) WithFlags(flagSet *flag.FlagSet) *Loader {
-	l.flagSet = flagSet
-	l.flagSet.StringVar(&l.cfgPathOverride, flagCfgPath, "", "config path")
-
-	l.setupFlagSet("", reflect.TypeOf(l.cfg))
-
-	return l
 }
 
 func (l *Loader) initConfigFromFile(path string) error {
@@ -272,8 +240,14 @@ func buildFlagPath(keys ...string) string {
 	return strings.Join(arr, sep)
 }
 
-func New(cfg interface{}) *Loader {
-	return &Loader{
+func New(cfg interface{}, opts ...Option) *Loader {
+	loader := Loader{
 		cfg: cfg,
 	}
+
+	for _, opt := range opts {
+		opt.apply(&loader)
+	}
+
+	return &loader
 }

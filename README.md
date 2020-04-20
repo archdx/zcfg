@@ -33,7 +33,7 @@ type LogConfig struct {
 
 func main() {
 	var cfg Config
-	cfgLoader := zconf.New(&cfg).FromYAML("config.yaml").WithFlags(flag.CommandLine)
+	cfgLoader := zconf.New(&cfg, zconf.FromYAML("config.yaml"), zconf.UseFlags(flag.CommandLine))
 
 	err := cfgLoader.Load()
 	if err != nil {
