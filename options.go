@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/pelletier/go-toml"
 	"gopkg.in/yaml.v2"
 )
 
@@ -31,6 +32,15 @@ func FromJSON(defaultPath string) Option {
 		l.cfgPath = defaultPath
 		l.cfgFileDecoder = func(r io.Reader, dst interface{}) error {
 			return json.NewDecoder(r).Decode(dst)
+		}
+	})
+}
+
+func FromTOML(defaultPath string) Option {
+	return optionFunc(func(l *Loader) {
+		l.cfgPath = defaultPath
+		l.cfgFileDecoder = func(r io.Reader, dst interface{}) error {
+			return toml.NewDecoder(r).Decode(dst)
 		}
 	})
 }
