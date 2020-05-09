@@ -176,8 +176,7 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 }
 
 func (l *Loader) lookupOverrideValue(flagName, env string) string {
-	if l.useFlags() &&
-		flagName != "" && flagName != "-" {
+	if l.useFlags() && flagName != "" {
 		if flag := l.flagSet.Lookup(flagName); flag != nil {
 			val := flag.Value.String()
 			if val != "" {
@@ -186,7 +185,7 @@ func (l *Loader) lookupOverrideValue(flagName, env string) string {
 		}
 	}
 
-	if env != "" && env != "-" {
+	if env != "" {
 		return os.Getenv(env)
 	}
 

@@ -1,12 +1,12 @@
 # zconf
-[![Build Status](https://travis-ci.org/mzoxx/zconf.svg?branch=master)](https://travis-ci.org/mzoxx/zconf)
-[![codecov](https://codecov.io/gh/mzoxx/zconf/branch/master/graph/badge.svg)](https://codecov.io/gh/mzoxx/zconf)
+[![Build Status](https://travis-ci.org/archdx/zconf.svg?branch=master)](https://travis-ci.org/archdx/zconf)
+[![codecov](https://codecov.io/gh/archdx/zconf/branch/master/graph/badge.svg)](https://codecov.io/gh/archdx/zconf)
 ### Description
 
 Package zconf provides functionality to load application config with order of precedence:  
 Command line arguments > Environment variables > Configuration file
 
-The key difference from [viper](https://github.com/spf13/viper) is a ready to use config struct after load without need to additionally use any getters
+The key difference from [viper](https://github.com/spf13/viper) is loading a ready to use config struct without need to use key getters
 
 ### Example
 ```go
@@ -42,7 +42,7 @@ func main() {
 }
 ```
 ```bash
-LOG_LEVEL=DEBUG go run main.go --api.port=8001 --clickhouse.user=testuser --clickhouse.database=testdb --clickhouse.readTimeout=1s
+LOG_LEVEL=DEBUG go run main.go -c config.yaml --api.port=8001 --clickhouse.user=testuser --clickhouse.database=testdb --clickhouse.readTimeout=1s
 ```
 
 ### TODO
