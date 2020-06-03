@@ -1,4 +1,4 @@
-package zconf
+package zcfg
 
 import (
 	"flag"
@@ -59,7 +59,7 @@ func TestLoad(t *testing.T) {
 		}
 	)
 
-	cfgFile, err := ioutil.TempFile(os.TempDir(), "zconf-test-config-*")
+	cfgFile, err := ioutil.TempFile(os.TempDir(), "zcfg-test-config-*")
 	require.Nil(t, err)
 
 	defer os.Remove(cfgFile.Name())

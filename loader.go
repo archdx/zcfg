@@ -1,4 +1,4 @@
-package zconf
+package zcfg
 
 import (
 	"flag"

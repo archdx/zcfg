@@ -1,9 +1,9 @@
-# zconf
-[![Build Status](https://travis-ci.org/archdx/zconf.svg?branch=master)](https://travis-ci.org/archdx/zconf)
-[![codecov](https://codecov.io/gh/archdx/zconf/branch/master/graph/badge.svg)](https://codecov.io/gh/archdx/zconf)
+# zcfg
+[![Build Status](https://travis-ci.org/archdx/zcfg.svg?branch=master)](https://travis-ci.org/archdx/zcfg)
+[![codecov](https://codecov.io/gh/archdx/zcfg/branch/master/graph/badge.svg)](https://codecov.io/gh/archdx/zcfg)
 ### Description
 
-Package zconf provides functionality to load application config with order of precedence:  
+Package zcfg provides functionality to load application config with order of precedence:  
 Command line arguments > Environment variables > Configuration file
 
 The key difference from [viper](https://github.com/spf13/viper) is loading a ready to use config struct without need to use key getters
@@ -33,7 +33,7 @@ type LogConfig struct {
 
 func main() {
 	var cfg Config
-	cfgLoader := zconf.New(&cfg, zconf.FromYAML("config.yaml"), zconf.UseFlags(flag.CommandLine))
+	cfgLoader := zcfg.New(&cfg, zcfg.FromYAML("config.yaml"), zcfg.UseFlags(flag.CommandLine))
 
 	err := cfgLoader.Load()
 	if err != nil {

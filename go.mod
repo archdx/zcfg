@@ -1,4 +1,4 @@
-module github.com/archdx/zconf
+module github.com/archdx/zcfg
 
 go 1.13
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/archdx/zconf"
+	"github.com/archdx/zcfg"
 
 	"github.com/davecgh/go-spew/spew"
 )
@@ -41,7 +41,7 @@ type LogConfig struct {
 // LOG_LEVEL=DEBUG go run main.go -c config.yaml --api.port=8001 --clickhouse.readTimeout=1s --kafka.brokers=host1,host2
 func main() {
 	var cfg Config
-	cfgLoader := zconf.New(&cfg, zconf.FromYAML("config.yaml" /* default path */), zconf.UseFlags(flag.CommandLine))
+	cfgLoader := zcfg.New(&cfg, zcfg.FromYAML("config.yaml" /* default path */), zcfg.UseFlags(flag.CommandLine))
 
 	// flag.CommandLine.Usage()
 
