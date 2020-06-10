@@ -59,7 +59,7 @@ func TestLoad(t *testing.T) {
 		}
 	)
 
-	cfgFile, err := ioutil.TempFile(os.TempDir(), "zcfg-test-config-*")
+	cfgFile, err := ioutil.TempFile(os.TempDir(), "zcfg-test-config-*.json")
 	require.Nil(t, err)
 
 	defer os.Remove(cfgFile.Name())
@@ -86,7 +86,7 @@ func TestLoad(t *testing.T) {
 	flagSet := flag.NewFlagSet("", flag.ExitOnError)
 
 	var cfg config
-	cfgLoader := New(&cfg, FromJSON(cfgFile.Name()), UseFlags(flagSet))
+	cfgLoader := New(&cfg, WithConfigPath(cfgFile.Name()), UseFlags(flagSet))
 
 	unsetEnv := setTestEnv(testCaseEnv{
 		"LOG_LEVEL": "INFO",
@@ -133,7 +133,7 @@ func TestLoad(t *testing.T) {
 
 	err = cfgLoader.Load()
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, expectedCfg, cfg)
 }
 

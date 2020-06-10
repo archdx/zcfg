@@ -3,8 +3,8 @@ package zcfg
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -24,8 +24,6 @@ type Loader struct {
 	cfgPath         string
 	cfgPathOverride string
 
-	cfgFileDecoder func(r io.Reader, dst interface{}) error
-
 	flagSet *flag.FlagSet
 }
 
@@ -34,8 +32,8 @@ func (l *Loader) Load() error {
 		l.flagSet.Parse(os.Args[1:])
 	}
 
-	if l.useConfigFile() {
-		err := l.initConfigFromFile(l.getConfigPath())
+	if cfgPath := l.getConfigPath(); cfgPath != "" {
+		err := l.initConfigFromFile(cfgPath)
 		if err != nil {
 			return err
 		}
@@ -45,6 +43,13 @@ func (l *Loader) Load() error {
 }
 
 func (l *Loader) initConfigFromFile(path string) error {
+	ext := strings.TrimPrefix(filepath.Ext(path), ".")
+
+	decodeFunc, ok := fileDecoders[ext]
+	if !ok {
+		return fmt.Errorf("unsupported file extension: %s", ext)
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -52,7 +57,7 @@ func (l *Loader) initConfigFromFile(path string) error {
 
 	defer f.Close()
 
-	return l.cfgFileDecoder(f, l.cfg)
+	return decodeFunc(f, l.cfg)
 }
 
 func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, before func()) error {
@@ -208,10 +213,6 @@ func (l *Loader) setupFlagSet(flagPath string, node reflect.Type) {
 	default:
 		l.flagSet.String(flagPath, "", "")
 	}
-}
-
-func (l *Loader) useConfigFile() bool {
-	return l.cfgFileDecoder != nil
 }
 
 func (l *Loader) useFlags() bool {

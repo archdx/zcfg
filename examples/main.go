@@ -41,7 +41,7 @@ type LogConfig struct {
 // LOG_LEVEL=DEBUG go run main.go -c config.yaml --api.port=8001 --clickhouse.readTimeout=1s --kafka.brokers=host1,host2
 func main() {
 	var cfg Config
-	cfgLoader := zcfg.New(&cfg, zcfg.FromYAML("config.yaml" /* default path */), zcfg.UseFlags(flag.CommandLine))
+	cfgLoader := zcfg.New(&cfg, zcfg.WithConfigPath("config.yaml" /* default path */), zcfg.UseFlags(flag.CommandLine))
 
 	// flag.CommandLine.Usage()
 

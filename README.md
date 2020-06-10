@@ -33,7 +33,7 @@ type LogConfig struct {
 
 func main() {
 	var cfg Config
-	cfgLoader := zcfg.New(&cfg, zcfg.FromYAML("config.yaml"), zcfg.UseFlags(flag.CommandLine))
+	cfgLoader := zcfg.New(&cfg, zcfg.WithConfigPath("config.yaml"), zcfg.UseFlags(flag.CommandLine))
 
 	err := cfgLoader.Load()
 	if err != nil {
@@ -47,5 +47,3 @@ LOG_LEVEL=DEBUG go run main.go -c config.yaml --api.port=8001 --clickhouse.user=
 
 ### TODO
 - vault support for passwords and other stuff
-- more file types
-- more examples
