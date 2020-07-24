@@ -13,7 +13,7 @@ type optionFunc func(*Loader)
 
 func (fn optionFunc) apply(l *Loader) { fn(l) }
 
-func WithConfigPath(path string) Option {
+func FromFile(path string) Option {
 	return optionFunc(func(l *Loader) {
 		l.cfgPath = path
 	})

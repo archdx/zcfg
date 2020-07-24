@@ -1,12 +1,6 @@
 # zcfg
 [![Build Status](https://travis-ci.org/archdx/zcfg.svg?branch=master)](https://travis-ci.org/archdx/zcfg)
 [![codecov](https://codecov.io/gh/archdx/zcfg/branch/master/graph/badge.svg)](https://codecov.io/gh/archdx/zcfg)
-### Description
-
-Package zcfg provides functionality to load application config with order of precedence:  
-Command line arguments > Environment variables > Configuration file
-
-The key difference from [viper](https://github.com/spf13/viper) is loading a ready to use config struct without need to use key getters
 
 ### Example
 ```go
@@ -33,10 +27,9 @@ type LogConfig struct {
 
 func main() {
 	var cfg Config
-	cfgLoader := zcfg.New(&cfg, zcfg.WithConfigPath("config.yaml"), zcfg.UseFlags(flag.CommandLine))
 
-	err := cfgLoader.Load()
-	if err != nil {
+	cfgLoader := zcfg.New(&cfg, zcfg.FromFile("config.yaml"), zcfg.UseFlags(flag.CommandLine))
+	if err := cfgLoader.Load(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -46,4 +39,4 @@ LOG_LEVEL=DEBUG go run main.go -c config.yaml --api.port=8001 --clickhouse.user=
 ```
 
 ### TODO
-- vault support for passwords and other stuff
+- vault support for passwords
