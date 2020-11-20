@@ -205,7 +205,7 @@ func (l *Loader) setupFlagSet(flagPath string, node reflect.Type) {
 	case reflect.Struct:
 		for i := 0; i < node.NumField(); i++ {
 			field := node.Field(i)
-			if fval, ok := field.Tag.Lookup(tagFlag); ok {
+			if fval, ok := field.Tag.Lookup(tagFlag); ok || field.Anonymous {
 				l.setupFlagSet(buildFlagPath(flagPath, fval), field.Type)
 			}
 		}
