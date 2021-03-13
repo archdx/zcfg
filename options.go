@@ -26,6 +26,6 @@ func UseFlags(flagSet *flag.FlagSet) Option {
 		l.flagSet = flagSet
 		l.flagSet.StringVar(&l.cfgPathOverride, flagCfgPath, "", "config path")
 
-		l.setupFlagSet("", reflect.TypeOf(l.cfg))
+		l.setupFlagSet(traverseContext{}, reflect.TypeOf(l.cfg))
 	})
 }

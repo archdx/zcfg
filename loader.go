@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	tagEnv  = "env"
-	tagFlag = "flag"
+	tagEnv   = "env"
+	tagFlag  = "flag"
+	tagUsage = "usage"
 )
 
 var timeDurationType = reflect.TypeOf(time.Duration(0))
@@ -39,7 +40,7 @@ func (l *Loader) Load() error {
 		}
 	}
 
-	return l.overrideConfig("", "", l.cfg, nil)
+	return l.overrideConfig(traverseContext{}, reflect.ValueOf(l.cfg), nil)
 }
 
 func (l *Loader) initConfigFromFile(path string) error {
@@ -60,38 +61,46 @@ func (l *Loader) initConfigFromFile(path string) error {
 	return decodeFunc(f, l.cfg)
 }
 
-func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, before func()) error {
-	v := reflect.ValueOf(node)
-	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
-		if !v.IsNil() {
+type traverseContext struct {
+	Tags     reflect.StructTag
+	FullFlag string
+}
+
+func (l *Loader) overrideConfig(tctx traverseContext, node reflect.Value, bindNode func()) error {
+	for ; node.Kind() == reflect.Ptr; node = node.Elem() {
+		if !node.IsNil() {
 			continue
 		}
 
-		prev := v
-		next := reflect.New(v.Type().Elem())
-		if before != nil {
-			_before := before
-			before = func() { _before(); prev.Set(next) }
+		prev := node
+		next := reflect.New(prev.Type().Elem())
+
+		if bindNode != nil {
+			_bindNode := bindNode
+			bindNode = func() { _bindNode(); prev.Set(next) }
 		} else {
-			before = func() { prev.Set(next) }
+			bindNode = func() { prev.Set(next) }
 		}
 
-		v = next
+		node = next
 	}
 
-	if v.Kind() == reflect.Struct {
-		for i := 0; i < v.Type().NumField(); i++ {
-			field := v.Field(i)
+	if node.Kind() == reflect.Struct {
+		for i := 0; i < node.Type().NumField(); i++ {
+			field := node.Field(i)
 			if !field.CanSet() {
 				continue
 			}
 
-			env, _ = v.Type().Field(i).Tag.Lookup(tagEnv)
-			fval, _ := v.Type().Field(i).Tag.Lookup(tagFlag)
+			tags := node.Type().Field(i).Tag
 
-			nextFlagPath := buildFlagPath(flagPath, fval)
+			flag, _ := tags.Lookup(tagFlag)
 
-			err := l.overrideConfig(nextFlagPath, env, field.Addr().Interface(), before)
+			err := l.overrideConfig(traverseContext{
+				Tags:     tags,
+				FullFlag: joinFlags(tctx.FullFlag, flag),
+			}, field.Addr(), bindNode)
+
 			if err != nil {
 				return err
 			}
@@ -100,24 +109,20 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 		return nil
 	}
 
-	value := l.lookupOverrideValue(flagPath, env)
+	value := l.lookupOverrideValue(tctx)
 	if value == "" {
 		return nil
 	}
 
-	if before != nil {
-		before()
-	}
-
-	switch v.Kind() {
+	switch node.Kind() {
 	case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
-		if v.Type() == timeDurationType {
+		if node.Type() == timeDurationType {
 			dur, err := time.ParseDuration(value)
 			if err != nil {
 				return err
 			}
 
-			v.SetInt(int64(dur))
+			node.SetInt(int64(dur))
 			break
 		}
 
@@ -126,7 +131,7 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 			return err
 		}
 
-		v.SetInt(num)
+		node.SetInt(num)
 
 	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
 		num, err := strconv.ParseUint(value, 10, 64)
@@ -134,7 +139,7 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 			return err
 		}
 
-		v.SetUint(num)
+		node.SetUint(num)
 
 	case reflect.Float64, reflect.Float32:
 		num, err := strconv.ParseFloat(value, 64)
@@ -142,7 +147,7 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 			return err
 		}
 
-		v.SetFloat(num)
+		node.SetFloat(num)
 
 	case reflect.Bool:
 		bval, err := strconv.ParseBool(value)
@@ -150,22 +155,22 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 			return err
 		}
 
-		v.SetBool(bval)
+		node.SetBool(bval)
 
 	case reflect.String:
-		v.SetString(value)
+		node.SetString(value)
 
 	case reflect.Slice:
 		const sep = ","
 		vals := strings.Split(value, sep)
 
-		v.Set(reflect.MakeSlice(v.Type(), 0, len(vals)))
+		node.Set(reflect.MakeSlice(node.Type(), 0, len(vals)))
 
-		switch t := v.Interface().(type) {
+		switch t := node.Interface().(type) {
 		case []string:
 			for _, val := range vals {
 				if len(val) > 0 {
-					v.Set(reflect.Append(v, reflect.ValueOf(val)))
+					node.Set(reflect.Append(node, reflect.ValueOf(val)))
 				}
 			}
 
@@ -174,15 +179,20 @@ func (l *Loader) overrideConfig(flagPath string, env string, node interface{}, b
 		}
 
 	default:
-		return fmt.Errorf("cannot set field with kind: %s", v.Kind())
+		return fmt.Errorf("cannot set field with kind: %s", node.Kind())
+	}
+
+	if bindNode != nil {
+		bindNode()
 	}
 
 	return nil
 }
 
-func (l *Loader) lookupOverrideValue(flagName, env string) string {
-	if l.useFlags() && flagName != "" {
-		if flag := l.flagSet.Lookup(flagName); flag != nil {
+func (l *Loader) lookupOverrideValue(tctx traverseContext) string {
+	if l.useFlags() && tctx.FullFlag != "" {
+		flag := l.flagSet.Lookup(tctx.FullFlag)
+		if flag != nil {
 			val := flag.Value.String()
 			if val != "" {
 				return val
@@ -190,14 +200,14 @@ func (l *Loader) lookupOverrideValue(flagName, env string) string {
 		}
 	}
 
-	if env != "" {
+	if env, ok := tctx.Tags.Lookup(tagEnv); ok {
 		return os.Getenv(env)
 	}
 
 	return ""
 }
 
-func (l *Loader) setupFlagSet(flagPath string, node reflect.Type) {
+func (l *Loader) setupFlagSet(tctx traverseContext, node reflect.Type) {
 	for ; node.Kind() == reflect.Ptr; node = node.Elem() {
 	}
 
@@ -205,13 +215,20 @@ func (l *Loader) setupFlagSet(flagPath string, node reflect.Type) {
 	case reflect.Struct:
 		for i := 0; i < node.NumField(); i++ {
 			field := node.Field(i)
-			if fval, ok := field.Tag.Lookup(tagFlag); ok || field.Anonymous {
-				l.setupFlagSet(buildFlagPath(flagPath, fval), field.Type)
+			tags := field.Tag
+
+			if flag, ok := tags.Lookup(tagFlag); ok || field.Anonymous {
+				l.setupFlagSet(traverseContext{
+					Tags:     tags,
+					FullFlag: joinFlags(tctx.FullFlag, flag),
+				}, field.Type)
 			}
 		}
 
 	default:
-		l.flagSet.String(flagPath, "", "")
+		usage, _ := tctx.Tags.Lookup(tagUsage)
+
+		l.flagSet.String(tctx.FullFlag, "", usage)
 	}
 }
 
@@ -227,7 +244,7 @@ func (l *Loader) getConfigPath() string {
 	return l.cfgPath
 }
 
-func buildFlagPath(keys ...string) string {
+func joinFlags(keys ...string) string {
 	const sep = "."
 
 	var arr []string
