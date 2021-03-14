@@ -55,7 +55,7 @@ func TestLoad(t *testing.T) {
 			Kafka      *kafkaConfig      `json:"kafka"      flag:"kafka"`
 			Redis      *redisConfig      `json:"redis"      flag:"redis"`
 			Log        *logConfig        `json:"log"        flag:"log"`
-			Debug      bool              `json:"debug"      flag:"debug"      env:"DEBUG"`
+			Debug      bool              `json:"debug"      flag:"debug"`
 		}
 	)
 
@@ -135,6 +135,41 @@ func TestLoad(t *testing.T) {
 
 	require.Nil(t, err)
 	assert.Equal(t, expectedCfg, cfg)
+}
+
+func TestLoad_EmbeddedPtrs(t *testing.T) {
+	type (
+		innerConfig2 struct {
+			Field1 int `flag:"field1"`
+			Field2 int `flag:"field2"`
+		}
+
+		innerConfig1 struct {
+			Inner *innerConfig2 `flag:"inner"`
+		}
+
+		config struct {
+			Inner *innerConfig1 `flag:"inner"`
+		}
+	)
+
+	flagSet := flag.NewFlagSet("", flag.ExitOnError)
+
+	var cfg config
+	cfgLoader := New(&cfg, UseFlags(flagSet))
+
+	flagSet.Parse([]string{
+		"--inner.inner.field1", "1",
+		"--inner.inner.field2", "2",
+	})
+
+	err := cfgLoader.Load()
+
+	require.Nil(t, err)
+	require.NotNil(t, cfg.Inner)
+	require.NotNil(t, cfg.Inner.Inner)
+	assert.Equal(t, 1, cfg.Inner.Inner.Field1)
+	assert.Equal(t, 2, cfg.Inner.Inner.Field2)
 }
 
 type testCaseEnv map[string]string
